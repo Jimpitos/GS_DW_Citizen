@@ -1,0 +1,15 @@
+{
+	"name": "adf-cit-rm555295",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "canadacentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "33625073-5850-450e-9a03-371cd3cad8dc",
+		"tenantId": "11dbbfe2-89b8-4549-be10-cec364e59551"
+	}
+}

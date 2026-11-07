@@ -1,0 +1,31 @@
+{
+	"name": "DS_SQL_DimCanal",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_CitizenTech",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "sk_canal",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "cod_canal",
+				"type": "varchar"
+			},
+			{
+				"name": "nome_canal",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "gs_rm555295",
+			"table": "DimCanal"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

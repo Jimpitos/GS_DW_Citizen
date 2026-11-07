@@ -1,0 +1,31 @@
+{
+	"name": "DS_SQL_DimServico",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_CitizenTech",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "sk_servico",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "cod_servico",
+				"type": "varchar"
+			},
+			{
+				"name": "nome_servico",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "gs_rm555295",
+			"table": "DimServico"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

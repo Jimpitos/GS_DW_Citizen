@@ -1,0 +1,155 @@
+{
+	"name": "DF_Dimensoes",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_CSV_Territorios",
+						"type": "DatasetReference"
+					},
+					"name": "srcTerritorios"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_CSV_Servicos",
+						"type": "DatasetReference"
+					},
+					"name": "srcServicos"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_CSV_Canais",
+						"type": "DatasetReference"
+					},
+					"name": "srcCanais"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_SQL_DimTerritorio",
+						"type": "DatasetReference"
+					},
+					"name": "sinkDimTerritorio"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_SQL_DimServico",
+						"type": "DatasetReference"
+					},
+					"name": "sinkDimServico"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_SQL_DimCanal",
+						"type": "DatasetReference"
+					},
+					"name": "sinkDimCanal"
+				}
+			],
+			"transformations": [
+				{
+					"name": "PadronizarTerritorio"
+				},
+				{
+					"name": "PadronizarServico"
+				},
+				{
+					"name": "PadronizarCanal"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          cod_territorio as string,",
+				"          nome_territorio as string,",
+				"          regiao as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> srcTerritorios",
+				"source(output(",
+				"          cod_servico as string,",
+				"          nome_servico as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> srcServicos",
+				"source(output(",
+				"          cod_canal as string,",
+				"          nome_canal as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> srcCanais",
+				"srcTerritorios derive(cod_territorio = upper(trim(cod_territorio)),",
+				"          nome_territorio = trim(nome_territorio),",
+				"          regiao = trim(regiao)) ~> PadronizarTerritorio",
+				"srcServicos derive(cod_servico = upper(trim(cod_servico)),",
+				"          nome_servico = trim(nome_servico)) ~> PadronizarServico",
+				"srcCanais derive(cod_canal = upper(trim(cod_canal)),",
+				"          nome_canal = trim(nome_canal)) ~> PadronizarCanal",
+				"PadronizarTerritorio sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          sk_territorio as integer,",
+				"          cod_territorio as string,",
+				"          nome_territorio as string,",
+				"          regiao as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          cod_territorio,",
+				"          nome_territorio,",
+				"          regiao",
+				"     )) ~> sinkDimTerritorio",
+				"PadronizarServico sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          sk_servico as integer,",
+				"          cod_servico as string,",
+				"          nome_servico as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          cod_servico,",
+				"          nome_servico",
+				"     )) ~> sinkDimServico",
+				"PadronizarCanal sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          sk_canal as integer,",
+				"          cod_canal as string,",
+				"          nome_canal as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          cod_canal,",
+				"          nome_canal",
+				"     )) ~> sinkDimCanal"
+			]
+		}
+	}
+}

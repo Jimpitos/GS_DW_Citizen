@@ -1,0 +1,224 @@
+{
+	"name": "DF_Fato",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_CSV_Solicitacoes",
+						"type": "DatasetReference"
+					},
+					"name": "srcSolicitacoes"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_SQL_DimTerritorio",
+						"type": "DatasetReference"
+					},
+					"name": "srcDimTerritorio"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_SQL_DimServico",
+						"type": "DatasetReference"
+					},
+					"name": "srcDimServico"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_SQL_DimCanal",
+						"type": "DatasetReference"
+					},
+					"name": "srcDimCanal"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_SQL_Fato",
+						"type": "DatasetReference"
+					},
+					"name": "sinkFato"
+				}
+			],
+			"transformations": [
+				{
+					"name": "PadronizarSolicitacoes"
+				},
+				{
+					"name": "Deduplicar"
+				},
+				{
+					"name": "Convercao"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "skTerritorio"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "select3"
+				},
+				{
+					"name": "skCanal"
+				},
+				{
+					"name": "MedidasNovas"
+				},
+				{
+					"name": "select4"
+				},
+				{
+					"name": "skServico"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          id_solicitacao as string,",
+				"          cod_territorio as string,",
+				"          cod_servico as string,",
+				"          cod_canal as string,",
+				"          dt_abertura as string,",
+				"          dt_fechamento as string,",
+				"          status as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> srcSolicitacoes",
+				"source(output(",
+				"          sk_territorio as integer,",
+				"          cod_territorio as string,",
+				"          nome_territorio as string,",
+				"          regiao as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> srcDimTerritorio",
+				"source(output(",
+				"          sk_servico as integer,",
+				"          cod_servico as string,",
+				"          nome_servico as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> srcDimServico",
+				"source(output(",
+				"          sk_canal as integer,",
+				"          cod_canal as string,",
+				"          nome_canal as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> srcDimCanal",
+				"srcSolicitacoes derive(id_solicitacao = trim(id_solicitacao),",
+				"          cod_territorio = toString(upper(trim(cod_territorio))),",
+				"          cod_servico = upper(trim(cod_servico)),",
+				"          cod_canal = upper(trim(cod_canal)),",
+				"          dt_abertura = trim(dt_abertura),",
+				"          dt_fechamento = trim(dt_fechamento),",
+				"          status = upper(trim(status))) ~> PadronizarSolicitacoes",
+				"PadronizarSolicitacoes aggregate(groupBy(id_solicitacao,",
+				"          cod_territorio,",
+				"          cod_servico,",
+				"          cod_canal,",
+				"          dt_abertura,",
+				"          dt_fechamento,",
+				"          status),",
+				"     linhas = count()) ~> Deduplicar",
+				"Deduplicar derive(id_solicitacao = toInteger(id_solicitacao),",
+				"          dt_abertura = toTimestamp(dt_abertura, 'yyyy-MM-dd HH:mm:ss'),",
+				"          dt_fechamento = toTimestamp(dt_fechamento, 'yyyy-MM-dd HH:mm:ss')) ~> Convercao",
+				"srcDimTerritorio select(mapColumn(",
+				"          sk_territorio,",
+				"          lk_cod_territorio = cod_territorio",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"Convercao, select1 lookup(cod_territorio == lk_cod_territorio,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> skTerritorio",
+				"srcDimServico select(mapColumn(",
+				"          sk_servico,",
+				"          lk_cod_servico = cod_servico",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"srcDimCanal select(mapColumn(",
+				"          sk_canal,",
+				"          lk_cod_canal = cod_canal",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select3",
+				"skServico, select3 lookup(cod_canal == lk_cod_canal,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> skCanal",
+				"skCanal derive(data_key = toInteger(toString(dt_abertura, 'yyyyMMdd')),",
+				"          qtd_solicitacoes = toInteger(1),",
+				"          tempo_resolucao_horas = iif(status == 'CONCLUIDO',round(toDouble(dt_fechamento - dt_abertura) / 3600.0, 2), toDouble(null()))) ~> MedidasNovas",
+				"MedidasNovas select(mapColumn(",
+				"          id_solicitacao,",
+				"          dt_abertura,",
+				"          dt_fechamento,",
+				"          status,",
+				"          sk_territorio,",
+				"          sk_servico,",
+				"          sk_canal,",
+				"          data_key,",
+				"          qtd_solicitacoes,",
+				"          tempo_resolucao_horas",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select4",
+				"skTerritorio, select2 lookup(cod_servico == lk_cod_servico,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> skServico",
+				"select4 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          sk_fato_solicitacao as long,",
+				"          id_solicitacao as integer,",
+				"          sk_territorio as integer,",
+				"          sk_servico as integer,",
+				"          sk_canal as integer,",
+				"          data_key as integer,",
+				"          dt_abertura as timestamp,",
+				"          dt_fechamento as timestamp,",
+				"          status as string,",
+				"          qtd_solicitacoes as integer,",
+				"          tempo_resolucao_horas as decimal(12,2)",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          id_solicitacao,",
+				"          sk_territorio,",
+				"          sk_servico,",
+				"          sk_canal,",
+				"          data_key,",
+				"          dt_abertura,",
+				"          dt_fechamento,",
+				"          status,",
+				"          qtd_solicitacoes,",
+				"          tempo_resolucao_horas",
+				"     )) ~> sinkFato"
+			]
+		}
+	}
+}

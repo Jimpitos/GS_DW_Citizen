@@ -1,0 +1,54 @@
+{
+	"name": "DS_CSV_Solicitacoes",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_BLOB_CitizenTech",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "solicitacoes.csv",
+				"folderPath": "bruno-igor-lucas",
+				"container": "landing"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "id_solicitacao",
+				"type": "String"
+			},
+			{
+				"name": "cod_territorio",
+				"type": "String"
+			},
+			{
+				"name": "cod_servico",
+				"type": "String"
+			},
+			{
+				"name": "cod_canal",
+				"type": "String"
+			},
+			{
+				"name": "dt_abertura",
+				"type": "String"
+			},
+			{
+				"name": "dt_fechamento",
+				"type": "String"
+			},
+			{
+				"name": "status",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
